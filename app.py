@@ -92,9 +92,14 @@ def respond(message, topic, history):
         yield "", history
         return
 
-    # Messages sent to the model: system prompt + recent turns + topic-tagged turn
+    # Messages sent to the model: system prompt + recent turns + topic-tagged turn.
+    # Gradio's chatbot history dicts can carry extra fields (e.g. "metadata")
+    # that the Groq API rejects, so only role/content are forwarded.
     api_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    api_messages.extend(history[-MAX_HISTORY_MESSAGES:])
+    api_messages.extend(
+        {"role": m["role"], "content": m["content"]}
+        for m in history[-MAX_HISTORY_MESSAGES:]
+    )
     api_messages.append({"role": "user", "content": f"[Topic: {topic}] {message}"})
 
     # Visible chat stores the clean message (no topic tag) + an empty reply to fill
